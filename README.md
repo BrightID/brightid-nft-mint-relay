@@ -3,8 +3,13 @@
 ```
 HOST="0.0.0.0"
 PORT=5000
+RELAY_BASE_ROUTE="/brightid-nft-mint-relay"
+RPC_URL="wss://rpc.gnosischain.com/wss"
+CHAINID="0x64" # 100
+# GAS=500000
+# GAS_PRICE=10000000000
 CONTEXT="BrightID Context"
-BRIGHTID_ADDRESS="BrightID Verification Contract Address"
+CONTRACT_ADDRESS="BrightID Verification Contract Address"
 RELAYER_ADDRESS="Relay Wallet Address"
 RELAYER_PRIVATE="Relay Wallet Private Key"
 ```

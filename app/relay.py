@@ -6,14 +6,14 @@ from config import *
 
 w3 = Web3(Web3.WebsocketProvider(RPC_URL))
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-brightid = w3.eth.contract(address=BRIGHTID_ADDRESS, abi=BRIGHTID_ABI)
+contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=CONTRACT_ABI)
 
 def transact(f):
     nonce = w3.eth.getTransactionCount(RELAYER_ADDRESS, 'pending')
     tx = f.buildTransaction({
         'chainId': CHAINID,
-        'gas': GAS,
-        'gasPrice': GAS_PRICE,
+        # 'gas': GAS,
+        # 'gasPrice': GAS_PRICE,
         'nonce': nonce,
     })
     signed_txn = w3.eth.account.sign_transaction(tx, private_key=RELAYER_PRIVATE)
@@ -21,26 +21,26 @@ def transact(f):
     receipt = w3.eth.waitForTransactionReceipt(signed_txn['hash'])
     assert receipt['status'], '{} failed'.format(tx)
 
-def verify(addr, logger):
-    logger.info('verifying {}'.format(addr))
+def mint(addr, uuid, logger):
+    logger.info('minting {}'.format(uuid))
 
     addr = Web3.toChecksumAddress(addr)
 
-    # Query user verification status.
-    isVerifiedUser = brightid.functions.isVerifiedUser(addr).call()
+    # Query user's nft balance.
+    balance = contract.functions.balanceOf(addr).call()
 
-    # isVerifiedUser = False # DEBUG
+    # balance = 0 # DEBUG
 
     # Check to see if the user is already verified.
-    if isVerifiedUser == True:
-        logger.info('{} is verified'.format(addr))
+    if balance > 0:
+        logger.info('{} has minted'.format(addr))
         return
 
-    logger.info('{} is NOT verified'.format(addr))
+    logger.info('{} has NOT minted'.format(addr))
 
-    # Get the BrightID data that will be used as
+    # Get the contract data that will be used as
     # input for the verification transaction.
-    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr + '?signed=eth&timestamp=seconds').json()
+    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + uuid + '?signed=eth&timestamp=seconds').json()
     # logger.info('Query verification signing data')
     # logger.info(data)
 
@@ -50,8 +50,8 @@ def verify(addr, logger):
     data['contextIds'] = list(map(Web3.toChecksumAddress, data['contextIds']))
 
     # Run the verification transaction.
-    logger.info('verifying {}'.format(addr))
-    transact(brightid.functions.verify(
+    logger.info('minting {}'.format(uuid))
+    transact(contract.functions.verify(
         data['contextIds'],
         data['timestamp'],
         data['sig']['v'],
@@ -59,87 +59,67 @@ def verify(addr, logger):
         '0x' + data['sig']['s']
     ))
 
-    logger.info('{} verified'.format(addr))
+    logger.info('{} minted'.format(uuid))
 
-def sponsor(addr, logger):
-    logger.info('sponsoring {}'.format(addr))
+def bind(addr, uuidHash, nonce, signature, logger):
+    logger.info('binding {}'.format(addr))
+    logger.info('binding {}'.format(uuidHash))
+    logger.info('binding {}'.format(nonce))
+    logger.info('binding {}'.format(signature))
 
     addr = Web3.toChecksumAddress(addr)
 
-    # Query BrightID verification data
-    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
-    # logger.info('Query verification data')
-    # logger.info(data)
+    # Query user's nft balance.
+    balance = contract.functions.balanceOf(addr).call()
 
-    # Check to see if the user is already sponsored.
-    if 'errorNum' not in data or data['errorNum'] != NOT_SPONSORED:
-        logger.info('{} is sponsored'.format(addr))
+    # balance = 0 # DEBUG
+
+    # Check to see if the user is already verified.
+    if balance > 0:
+        logger.info('{} has minted'.format(addr))
         return
 
-    logger.info('{} is NOT sponsored'.format(addr))
-
     # Run the sponsorship transaction.
-    logger.info('sponsoring {}'.format(addr))
-    transact(brightid.functions.sponsor(addr))
+    logger.info('binding {}'.format(addr))
+    transact(contract.functions.bind(addr, uuidHash, nonce, signature))
 
-    # Recheck a users sponsorship status in intervals.
-    for i in range(SPONSOR_CHECK_NUM):
-        logger.info('waiting for sponsor operation get applied')
-        time.sleep(SPONSOR_CHECK_PERIOD)
+    logger.info('{} bound'.format(addr))
 
-        # Query BrightID verification data
-        data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
-        # logger.info('Query verification data')
-        # logger.info(data)
-
-        # Check the user's sponsorship status.
-        if 'errorNum' not in data or data['errorNum'] != NOT_SPONSORED:
-            logger.info('{} sponsored'.format(addr))
-            return
-
-    # User never ended up sponsored. Something must have failed.
-    logger.info('sponsoring failed')
-    raise Exception('sponsoring failed')
-
-def check_brightid_link(addr, logger):
-    logger.info('sponsoring {}'.format(addr))
-
-    addr = Web3.toChecksumAddress(addr)
+def check_brightid_link(contextId, logger):
+    logger.info('checking brightid link {}'.format(contextId))
 
     # waiting for link
     for i in range(LINK_CHECK_NUM):
         # Query BrightID verification data
-        data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
+        data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + contextId).json()
         # logger.info('Query verification data')
         # logger.info(data)
 
         # Check to see if the user has a linked BrightID
         if 'errorNum' not in data or data['errorNum'] != NOT_FOUND:
-            logger.info('{} is linked'.format(addr))
+            logger.info('{} is linked'.format(contextId))
 
-            # Verify the wallet id is the one currently linked to the BrightID account
+            # Verify the contextId is the one currently linked to the BrightID account
             contextIds = data.get('data', {}).get('contextIds', [])
-            if contextIds and contextIds[0].lower() != addr.lower():
-                logger.info('wallet is not current BrightID link')
+            if contextIds and contextIds[0].lower() != contextId.lower():
+                logger.info('uuid is not current BrightID link')
                 logger.info(contextIds)
-                logger.info(addr)
-                raise Exception('This address is not the most recent one you\'ve linked to BrightID. Please relink {} via BrightID!'.format(contextIds[0]))
+                logger.info(contextId)
+                raise Exception('This uuid is not the most recent one you\'ve linked to BrightID. Please relink {} via BrightID!'.format(contextIds[0]))
 
             return
 
-        logger.info('{} is NOT linked'.format(addr))
+        logger.info('{} is NOT linked'.format(contextId))
         time.sleep(LINK_CHECK_PERIOD)
     else:
-        logger.info('{} monitoring expired'.format(addr))
-        raise Exception('Could not determine that wallet is linked to BrightID')
+        logger.info('{} monitoring expired'.format(contextId))
+        raise Exception('Could not determine that uuid is linked to BrightID')
 
-def check_valid_sponsor(addr, logger):
-    addr = Web3.toChecksumAddress(addr)
-
+def check_valid_sponsor(contextId, logger):
     # Query BrightID verification data
     # This can be used to check for a valid sponsorship and
     # will be used to complete the verification in the next step.
-    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + addr).json()
+    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + contextId).json()
     # logger.info('Query verification data')
     # logger.info(data)
 
@@ -149,19 +129,17 @@ def check_valid_sponsor(addr, logger):
         logger.info(data['errorMessage'])
         raise Exception(data['errorMessage'])
 
-def process(addr, logger):
-    logger.info('processing {}'.format(addr))
+def processBind(addr, uuidHash, nonce, signature, logger):
+    logger.info('processing bind {}'.format(addr))
 
-    addr = Web3.toChecksumAddress(addr)
+    # bind
+    bind(addr, uuidHash, nonce, signature, logger)
+
+def processMint(addr, uuid, logger):
+    logger.info('processing mint {}'.format(uuid))
 
     # Make sure the address is a current BrightID link
-    check_brightid_link(addr, logger)
+    check_brightid_link(uuid, logger)
 
-    # Sponsor user
-    sponsor(addr, logger)
-
-    # Make sure that the user is still sponsored
-    check_valid_sponsor(addr, logger)
-
-    # Verify user
-    verify(addr, logger)
+    # mint nft
+    mint(addr, uuid, logger)

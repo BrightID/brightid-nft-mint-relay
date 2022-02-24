@@ -5,18 +5,18 @@ x-default-build:
     build: .
 
 services:
-    songadao-brightid-registration-relay-latest:
+    songadao-brightid-nft-mint-relay-latest:
         << : *default-build
         image: songadao/brightid-registration-relay:latest
 
-    # songadao-brightid-registration-relay-major:
+    # songadao-brightid-nft-mint-relay-major:
     #     << : *default-build
     #     image: songadao/brightid-registration-relay:1
 
-    # songadao-brightid-registration-relay-minor:
+    # songadao-brightid-nft-mint-relay-minor:
     #     << : *default-build
     #     image: songadao/brightid-registration-relay:1.0
 
-    # songadao-brightid-registration-relay-patch:
+    # songadao-brightid-nft-mint-relay-patch:
     #     << : *default-build
     #     image: songadao/brightid-registration-relay:1.0.1

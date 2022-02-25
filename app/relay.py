@@ -46,8 +46,8 @@ def mint(addr, uuid, logger):
 
     data = data['data']
 
-    # Make sure all contextIds are in checksum format.
-    data['contextIds'] = list(map(Web3.toChecksumAddress, data['contextIds']))
+    # Convert all contextIds to byte32
+    data['contextIds'] = list(map(Web3.utils.asciiToHex, data['contextIds']))
 
     # Run the verification transaction.
     logger.info('minting {}'.format(uuid))

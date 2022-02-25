@@ -21,6 +21,34 @@ def transact(f):
     receipt = w3.eth.waitForTransactionReceipt(signed_txn['hash'])
     assert receipt['status'], '{} failed'.format(tx)
 
+def bind(addr, uuidHash, nonce, signature, logger):
+    logger.info('binding {}'.format(addr))
+    logger.info('binding {}'.format(uuidHash))
+    logger.info('binding {}'.format(nonce))
+    logger.info('binding {}'.format(signature))
+
+    # Format address to checksum format
+    addr = Web3.toChecksumAddress(addr)
+
+    # Convert nonce to int
+    nonce = int(nonce)
+
+    # Query user's nft balance.
+    balance = contract.functions.balanceOf(addr).call()
+
+    balance = 0 # DEBUG
+
+    # Check to see if the user is already verified.
+    if balance > 0:
+        logger.info('{} has minted'.format(addr))
+        return
+
+    # Run the sponsorship transaction.
+    logger.info('binding {}'.format(addr))
+    transact(contract.functions.bind(addr, uuidHash, nonce, signature))
+
+    logger.info('{} bound'.format(addr))
+
 def mint(addr, uuid, logger):
     logger.info('minting {}'.format(uuid))
 
@@ -60,30 +88,6 @@ def mint(addr, uuid, logger):
     ))
 
     logger.info('{} minted'.format(uuid))
-
-def bind(addr, uuidHash, nonce, signature, logger):
-    logger.info('binding {}'.format(addr))
-    logger.info('binding {}'.format(uuidHash))
-    logger.info('binding {}'.format(nonce))
-    logger.info('binding {}'.format(signature))
-
-    addr = Web3.toChecksumAddress(addr)
-
-    # Query user's nft balance.
-    balance = contract.functions.balanceOf(addr).call()
-
-    # balance = 0 # DEBUG
-
-    # Check to see if the user is already verified.
-    if balance > 0:
-        logger.info('{} has minted'.format(addr))
-        return
-
-    # Run the sponsorship transaction.
-    logger.info('binding {}'.format(addr))
-    transact(contract.functions.bind(addr, uuidHash, nonce, signature))
-
-    logger.info('{} bound'.format(addr))
 
 def check_brightid_link(contextId, logger):
     logger.info('checking brightid link {}'.format(contextId))

@@ -36,7 +36,7 @@ def bind(addr, uuidHash, nonce, signature, logger):
     # Query user's nft balance.
     balance = contract.functions.balanceOf(addr).call()
 
-    balance = 0 # DEBUG
+    # balance = 0 # DEBUG
 
     # Check to see if the user is already verified.
     if balance > 0:

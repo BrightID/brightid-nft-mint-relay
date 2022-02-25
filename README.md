@@ -9,7 +9,7 @@ CHAINID="0x64" # 100
 # GAS=500000
 # GAS_PRICE=10000000000
 CONTEXT="BrightID Context"
-CONTRACT_ADDRESS="BrightID Verification Contract Address"
+CONTRACT_ADDRESS="Contract Address"
 RELAYER_ADDRESS="Relay Wallet Address"
 RELAYER_PRIVATE="Relay Wallet Private Key"
 ```

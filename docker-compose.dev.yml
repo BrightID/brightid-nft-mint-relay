@@ -1,7 +1,7 @@
 version: '3.7'
 
 services:
-    songadao-brightid-nft-mint-relay:
+    brightid-brightid-nft-mint-relay:
         build: .
         env_file:
             - .env

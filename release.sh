@@ -5,7 +5,7 @@ set -o pipefail
 set -o nounset
 
 # Run this script to build and push an updated image to docker hub.
-# link: https://hub.docker.com/r/songadao/idchain-relay
+# link: https://hub.docker.com/r/brightid/brightid-nft-mint-relay
 
 docker pull python:3.9-alpine
 

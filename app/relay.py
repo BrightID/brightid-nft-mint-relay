@@ -51,7 +51,7 @@ def mint(addr, uuid, logger):
 
     # Run the verification transaction.
     logger.info('minting {}'.format(uuid))
-    transact(contract.functions.verify(
+    transact(contract.functions.mint(
         data['contextIds'],
         data['timestamp'],
         data['sig']['v'],

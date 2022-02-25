@@ -18,8 +18,8 @@ RELAY_BASE_ROUTE = os.environ['RELAY_BASE_ROUTE']
 
 RPC_URL = os.environ['RPC_URL']
 CHAINID = os.environ['CHAINID']
-GAS = os.environ['GAS']
-GAS_PRICE = os.environ['GAS_PRICE']
+# GAS = os.environ['GAS']
+# GAS_PRICE = os.environ['GAS_PRICE']
 
 HOST = os.environ['HOST']
 PORT = os.environ['PORT']

@@ -61,6 +61,8 @@ def bind_endpoint():
 def mint_endpoint():
     app.logger.info('mint_endpoint')
 
+    # http://localhost:5001/brightid-nft-mint-relay/test-mint?addr=0xe031628c95Df01073E95b411388deB48f09F33AA&uuid=d440cd0275534920a6083dbd957ef2da
+
     # Check to make sure a wallet address is specified.
     addr = request.json and request.json.get('addr', '')
     if not addr:

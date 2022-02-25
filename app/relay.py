@@ -21,6 +21,9 @@ def transact(f):
     receipt = w3.eth.waitForTransactionReceipt(signed_txn['hash'])
     assert receipt['status'], '{} failed'.format(tx)
 
+def toBase32(inputStr):
+    return '0x' + inputStr.encode('utf-8').hex()
+
 def bind(addr, uuidHash, nonce, signature, logger):
     logger.info('binding {}'.format(addr))
     logger.info('binding {}'.format(uuidHash))
@@ -75,7 +78,9 @@ def mint(addr, uuid, logger):
     data = data['data']
 
     # Convert all contextIds to byte32
-    data['contextIds'] = list(map(Web3.utils.asciiToHex, data['contextIds']))
+    # logger.info(data['contextIds'])
+    data['contextIds'] = list(map(toBase32, data['contextIds']))
+    # logger.info(data['contextIds'])
 
     # Run the verification transaction.
     logger.info('minting {}'.format(uuid))

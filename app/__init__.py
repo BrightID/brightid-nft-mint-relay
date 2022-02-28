@@ -1,3 +1,4 @@
+import json
 from flask import Flask, request, jsonify
 
 from config import *
@@ -5,6 +6,17 @@ from cors import *
 from relay import *
 
 app = Flask(__name__)
+
+def format_error(e):
+    if hasattr(e, 'message'):
+        return jsonify({'success': False, 'error': e})
+    elif ("'code'" in str(e)):
+        return jsonify({'success': False, 'error': json.loads(e)})
+    else:
+        return jsonify({'success': False, 'error': {'code': 0, 'message': str(e)}})
+
+def format_success():
+    return jsonify({'success': True})
 
 # Index
 @app.route(RELAY_BASE_ROUTE + '/')
@@ -35,56 +47,48 @@ def bind_endpoint():
     # Check to make sure a wallet address is specified.
     addr = request.json and request.json.get('addr', '')
     if not addr:
-        return cors_response(jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing address'}})), 400
+        return cors_response(format_error('Missing address')), 400
 
     uuidHash = request.json and request.json.get('uuidHash', '')
     if not uuidHash:
-        return cors_response(jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing UUID HAsh'}})), 400
+        return cors_response(format_error('Missing  UUID Hash')), 400
 
     nonce = request.json and request.json.get('nonce', '')
     if not nonce:
-        return cors_response(jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing nonce'}})), 400
+        return cors_response(format_error('Missing nonce')), 400
 
     signature = request.json and request.json.get('signature', '')
     if not signature:
-        return cors_response(jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing signature'}})), 400
+        return cors_response(format_error('Missing signature')), 400
 
     try:
         processBind(addr, uuidHash, nonce, signature, app.logger)
     except Exception as e:
-        if hasattr(e, 'message'):
-            return cors_response(jsonify({'success': False, 'error': str(e)})), 400
-        else:
-            return cors_response(jsonify({'success': False, 'error': {'code': 0, 'message': str(e)}})), 400
+        return cors_response(format_error(e)), 400
 
-    return cors_response(jsonify({'success': True}))
+    return cors_response(format_success())
 
 # Mint
 @app.route(RELAY_BASE_ROUTE + '/mint', methods=['POST'])
 def mint_endpoint():
     app.logger.info('mint_endpoint')
 
-    # http://localhost:5001/brightid-nft-mint-relay/test-mint?addr=0xe031628c95Df01073E95b411388deB48f09F33AA&uuid=d440cd0275534920a6083dbd957ef2da
-
     # Check to make sure a wallet address is specified.
     addr = request.json and request.json.get('addr', '')
     if not addr:
-        return cors_response(jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing address'}})), 400
+        return cors_response(format_error('Missing address')), 400
 
     # Check to make sure a wallet address is specified.
     uuid = request.json and request.json.get('uuid', '')
     if not uuid:
-        return cors_response(jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing uuid'}})), 400
+        return cors_response(format_error('Missing uuid')), 400
 
     try:
         processMint(addr, uuid, app.logger)
     except Exception as e:
-        if hasattr(e, 'message'):
-            return cors_response(jsonify({'success': False, 'error': str(e)})), 400
-        else:
-            return cors_response(jsonify({'success': False, 'error': {'code': 0, 'message': str(e)}})), 400
+        return cors_response(format_error(e)), 400
 
-    return cors_response(jsonify({'success': True}))
+    return cors_response(format_success())
 
 # Test Bind
 @app.route(RELAY_BASE_ROUTE + '/test-bind', methods=['GET'])
@@ -94,29 +98,26 @@ def test_bind_endpoint():
     # Check to make sure a wallet address is specified.
     addr = request.args.get('addr', '')
     if not addr:
-        return jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing address'}}), 400
+        return format_error('Missing address'), 400
 
     uuidHash = request.args.get('uuidHash', '')
     if not uuidHash:
-        return jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing UUID HAsh'}}), 400
+        return format_error('Missing UUID Hash'), 400
 
     nonce = request.args.get('nonce', '')
     if not nonce:
-        return jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing nonce'}}), 400
+        return format_error('Missing nonce'), 400
 
     signature = request.args.get('signature', '')
     if not signature:
-        return jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing signature'}}), 400
+        return format_error('Missing signature'), 400
 
     try:
         processBind(addr, uuidHash, nonce, signature, app.logger)
     except Exception as e:
-        if hasattr(e, 'message'):
-            return jsonify({'success': False, 'error': e}), 400
-        else:
-            return jsonify({'success': False, 'error': {'code': 0, 'message': str(e)}}), 400
+        return format_error(e), 400
 
-    return jsonify({'success': True})
+    return format_success()
 
 # Test Mint
 @app.route(RELAY_BASE_ROUTE + '/test-mint', methods=['GET'])
@@ -126,22 +127,19 @@ def test_mint_endpoint():
     # Check to make sure a wallet address is specified.
     addr = request.args.get('addr', '')
     if not addr:
-        return jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing address'}}), 400
+        return format_error('Missing address'), 400
 
     # Check to make sure a wallet address is specified.
     uuid = request.args.get('uuid', '')
     if not uuid:
-        return jsonify({'success': False, 'error': {'code': 0, 'message': 'Missing uuid'}}), 400
+        return format_error('Missing uuid'), 400
 
     try:
         processMint(addr, uuid, app.logger)
     except Exception as e:
-        if hasattr(e, 'message'):
-            return jsonify({'success': False, 'error': e}), 400
-        else:
-            return jsonify({'success': False, 'error': {'code': 0, 'message': str(e)}}), 400
+        return format_error(e), 400
 
-    return jsonify({'success': True})
+    return format_success()
 
 if __name__ == '__main__':
     app.run(host=HOST, port=PORT)

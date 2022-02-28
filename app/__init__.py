@@ -80,56 +80,56 @@ def mint_endpoint():
 
     return cors_response(jsonify({'success': True}))
 
-# Test Bind
-@app.route(RELAY_BASE_ROUTE + '/test-bind', methods=['GET'])
-def test_bind_endpoint():
-    app.logger.info('test_bind_endpoint')
+# # Test Bind
+# @app.route(RELAY_BASE_ROUTE + '/test-bind', methods=['GET'])
+# def test_bind_endpoint():
+#     app.logger.info('test_bind_endpoint')
 
-    # Check to make sure a wallet address is specified.
-    addr = request.args.get('addr', '')
-    if not addr:
-        return jsonify({'success': False, 'errorMessage': 'Missing address'}), 400
+#     # Check to make sure a wallet address is specified.
+#     addr = request.args.get('addr', '')
+#     if not addr:
+#         return jsonify({'success': False, 'errorMessage': 'Missing address'}), 400
 
-    uuidHash = request.args.get('uuidHash', '')
-    if not uuidHash:
-        return jsonify({'success': False, 'errorMessage': 'Missing UUID Hash'}), 400
+#     uuidHash = request.args.get('uuidHash', '')
+#     if not uuidHash:
+#         return jsonify({'success': False, 'errorMessage': 'Missing UUID Hash'}), 400
 
-    nonce = request.args.get('nonce', '')
-    if not nonce:
-        return jsonify({'success': False, 'errorMessage': 'Missing nonce'}), 400
+#     nonce = request.args.get('nonce', '')
+#     if not nonce:
+#         return jsonify({'success': False, 'errorMessage': 'Missing nonce'}), 400
 
-    signature = request.args.get('signature', '')
-    if not signature:
-        return jsonify({'success': False, 'errorMessage': 'Missing signature'}), 400
+#     signature = request.args.get('signature', '')
+#     if not signature:
+#         return jsonify({'success': False, 'errorMessage': 'Missing signature'}), 400
 
-    try:
-        processBind(addr, uuidHash, nonce, signature, app.logger)
-    except Exception as e:
-        return jsonify({'success': False, 'errorMessage': str(e)}), 400
+#     try:
+#         processBind(addr, uuidHash, nonce, signature, app.logger)
+#     except Exception as e:
+#         return jsonify({'success': False, 'errorMessage': str(e)}), 400
 
-    return jsonify({'success': True})
+#     return jsonify({'success': True})
 
-# Test Mint
-@app.route(RELAY_BASE_ROUTE + '/test-mint', methods=['GET'])
-def test_mint_endpoint():
-    app.logger.info('test_mint_endpoint')
+# # Test Mint
+# @app.route(RELAY_BASE_ROUTE + '/test-mint', methods=['GET'])
+# def test_mint_endpoint():
+#     app.logger.info('test_mint_endpoint')
 
-    # Check to make sure a wallet address is specified.
-    addr = request.args.get('addr', '')
-    if not addr:
-        return jsonify({'success': False, 'errorMessage': 'Missing address'}), 400
+#     # Check to make sure a wallet address is specified.
+#     addr = request.args.get('addr', '')
+#     if not addr:
+#         return jsonify({'success': False, 'errorMessage': 'Missing address'}), 400
 
-    # Check to make sure a wallet address is specified.
-    uuid = request.args.get('uuid', '')
-    if not uuid:
-        return jsonify({'success': False, 'errorMessage': 'Missing uuid'}), 400
+#     # Check to make sure a wallet address is specified.
+#     uuid = request.args.get('uuid', '')
+#     if not uuid:
+#         return jsonify({'success': False, 'errorMessage': 'Missing uuid'}), 400
 
-    try:
-        processMint(addr, uuid, app.logger)
-    except Exception as e:
-        return jsonify({'success': False, 'errorMessage': str(e)}), 400
+#     try:
+#         processMint(addr, uuid, app.logger)
+#     except Exception as e:
+#         return jsonify({'success': False, 'errorMessage': str(e)}), 400
 
-    return jsonify({'success': True})
+#     return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(host=HOST, port=PORT)

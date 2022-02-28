@@ -24,78 +24,8 @@ def transact(f):
 def toBase32(inputStr):
     return '0x' + inputStr.encode('utf-8').hex()
 
-def bind(addr, uuidHash, nonce, signature, logger):
-    logger.info('binding {}'.format(addr))
-    logger.info('binding {}'.format(uuidHash))
-    logger.info('binding {}'.format(nonce))
-    logger.info('binding {}'.format(signature))
-
-    # Format address to checksum format
-    addr = Web3.toChecksumAddress(addr)
-
-    # Convert nonce to int
-    nonce = int(nonce)
-
-    # Query user's nft balance.
-    balance = contract.functions.balanceOf(addr).call()
-
-    # balance = 0 # DEBUG
-
-    # Check to see if the user is already verified.
-    if balance > 0:
-        logger.info('{} has minted'.format(addr))
-        return
-
-    # Run the sponsorship transaction.
-    logger.info('binding {}'.format(addr))
-    transact(contract.functions.bind(addr, uuidHash, nonce, signature))
-
-    logger.info('{} bound'.format(addr))
-
-def mint(addr, uuid, logger):
-    logger.info('minting {}'.format(uuid))
-
-    addr = Web3.toChecksumAddress(addr)
-
-    # Query user's nft balance.
-    balance = contract.functions.balanceOf(addr).call()
-
-    # balance = 0 # DEBUG
-
-    # Check to see if the user is already verified.
-    if balance > 0:
-        logger.info('{} has minted'.format(addr))
-        return
-
-    logger.info('{} has NOT minted'.format(addr))
-
-    # Get the contract data that will be used as
-    # input for the verification transaction.
-    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + uuid + '?signed=eth&timestamp=seconds').json()
-    # logger.info('Query verification signing data')
-    # logger.info(data)
-
-    data = data['data']
-
-    # Convert all contextIds to byte32
-    # logger.info(data['contextIds'])
-    data['contextIds'] = list(map(toBase32, data['contextIds']))
-    # logger.info(data['contextIds'])
-
-    # Run the verification transaction.
-    logger.info('minting {}'.format(uuid))
-    transact(contract.functions.mint(
-        data['contextIds'],
-        data['timestamp'],
-        data['sig']['v'],
-        '0x' + data['sig']['r'],
-        '0x' + data['sig']['s']
-    ))
-
-    logger.info('{} minted'.format(uuid))
-
-def check_brightid_link(contextId, logger):
-    logger.info('checking brightid link {}'.format(contextId))
+def checkBrightIDLink(contextId, logger):
+    logger.info('checking BrightID link {}'.format(contextId))
 
     # waiting for link
     for i in range(LINK_CHECK_NUM):
@@ -124,7 +54,7 @@ def check_brightid_link(contextId, logger):
         logger.info('{} monitoring expired'.format(contextId))
         raise Exception('Could not determine that uuid is linked to BrightID')
 
-def check_valid_sponsor(contextId, logger):
+def checkBrightIDSponsorship(contextId, logger):
     # Query BrightID verification data
     # This can be used to check for a valid sponsorship and
     # will be used to complete the verification in the next step.
@@ -138,6 +68,90 @@ def check_valid_sponsor(contextId, logger):
         logger.info(data['errorMessage'])
         raise Exception(data['errorMessage'])
 
+def checkBindAllowed(addr, logger):
+    # Format address to checksum format
+    addr = Web3.toChecksumAddress(addr)
+
+    # Query user's nft balance.
+    balance = contract.functions.balanceOf(addr).call()
+
+    balance = 0 # DEBUG
+
+    # Check to see if the user is already verified.
+    if balance > 0:
+        logger.info('{} has minted'.format(addr))
+        raise Exception('This address has already minted'.format(addr))
+
+def checkMintAllowed(addr, logger):
+    # Format address to checksum format
+    addr = Web3.toChecksumAddress(addr)
+
+    # Query user's nft balance.
+    balance = contract.functions.balanceOf(addr).call()
+
+    balance = 0 # DEBUG
+
+    # Check to see if the user is already verified.
+    if balance > 0:
+        logger.info('{} has minted'.format(addr))
+        raise Exception('This address has already minted'.format(addr))
+
+def bind(addr, uuidHash, nonce, signature, logger):
+    logger.info('binding {}'.format(addr))
+    logger.info('binding {}'.format(uuidHash))
+    logger.info('binding {}'.format(nonce))
+    logger.info('binding {}'.format(signature))
+
+    # Check if calling bind via the relay is allowed.
+    checkBindAllowed(addr, logger)
+
+    # Format address to checksum format
+    addr = Web3.toChecksumAddress(addr)
+
+    # Convert nonce to int
+    nonce = int(nonce)
+
+    # Run the sponsorship transaction.
+    logger.info('binding {}'.format(addr))
+    transact(contract.functions.bind(addr, uuidHash, nonce, signature))
+
+    logger.info('{} bound'.format(addr))
+
+def mint(addr, uuid, logger):
+    logger.info('minting {}'.format(addr))
+    logger.info('minting {}'.format(uuid))
+
+    # Check if calling bind via the relay is allowed.
+    checkMintAllowed(addr, logger)
+
+    # Format address to checksum format
+    addr = Web3.toChecksumAddress(addr)
+
+    # Get the contract data that will be used as
+    # input for the verification transaction.
+    data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + uuid + '?signed=eth&timestamp=seconds').json()
+    # logger.info('Query verification signing data')
+    # logger.info(data)
+
+    data = data['data']
+
+    # Convert all contextIds to byte32
+    # logger.info(data['contextIds'])
+    data['contextIds'] = list(map(toBase32, data['contextIds']))
+    # logger.info(data['contextIds'])
+
+    # Run the verification transaction.
+    logger.info('minting {}'.format(uuid))
+    transact(contract.functions.mint(
+        data['contextIds'],
+        data['timestamp'],
+        data['sig']['v'],
+        '0x' + data['sig']['r'],
+        '0x' + data['sig']['s']
+    ))
+
+    logger.info('{} minted'.format(uuid))
+
 def processBind(addr, uuidHash, nonce, signature, logger):
     logger.info('processing bind {}'.format(addr))
 
@@ -148,7 +162,7 @@ def processMint(addr, uuid, logger):
     logger.info('processing mint {}'.format(uuid))
 
     # Make sure the address is a current BrightID link
-    check_brightid_link(uuid, logger)
+    checkBrightIDLink(uuid, logger)
 
     # mint nft
     mint(addr, uuid, logger)

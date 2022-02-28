@@ -8,12 +8,26 @@ from relay import *
 app = Flask(__name__)
 
 def format_error(e):
-    if hasattr(e, 'message'):
-        return jsonify({'success': False, 'error': e})
-    elif ("'code'" in str(e)):
-        return jsonify({'success': False, 'error': json.loads(e)})
-    else:
-        return jsonify({'success': False, 'error': {'code': 0, 'message': str(e)}})
+    if ("'code'" in str(e)) & ("'message'" in str(e)):
+        errorJsonStr = str(e).replace("'", '"')
+        errorJson = json.loads(errorJsonStr)
+
+        app.logger.info(errorJson['code'])
+        app.logger.info(errorJson['message'])
+        app.logger.info(errorJson)
+        app.logger.info('code' in errorJson)
+        app.logger.info('message' in errorJson)
+
+        if ('code' in errorJson) and ('message' in errorJson):
+            return jsonify({'success': False, 'error': {'code': errorJson['code'], 'message': errorJson['message']}})
+
+    if ('code' in e) and ('message' in e):
+        return jsonify({'success': False, 'error': {'code': e['code'], 'message': e['message']}})
+
+    if ('message' in e):
+        return jsonify({'success': False, 'error': {'code': 0, 'message': e['message']}})
+
+    return jsonify({'success': False, 'error': {'code': 0, 'message': str(e)}})
 
 def format_success():
     return jsonify({'success': True})

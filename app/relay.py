@@ -3,6 +3,7 @@ import requests
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from config import *
+from fetch_events import *
 
 w3 = Web3(Web3.WebsocketProvider(RPC_URL))
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -69,18 +70,37 @@ def checkBrightIDSponsorship(contextId, logger):
         raise Exception(data['errorMessage'])
 
 def checkBindAllowed(addr, logger):
+    logger.info('check bind limit for {}'.format(addr))
+
     # Format address to checksum format
     addr = Web3.toChecksumAddress(addr)
 
-    # Query user's nft balance.
-    balance = contract.functions.balanceOf(addr).call()
+    # only allow a bind every n minutes per address
+    rateLimitLengthSeconds = 60 * BIND_RATE_LIMIT_DURATION_MINUTES
 
-    balance = 0 # DEBUG
+    # each block takes ~5 seconds
+    blockLengthSeconds = 5
 
-    # Check to see if the user is already verified.
-    if balance > 0:
-        logger.info('{} has minted'.format(addr))
-        raise Exception('This address has already minted'.format(addr))
+    # Number of blocks during the rate limit time
+    blocksToCheck = rateLimitLengthSeconds / blockLengthSeconds
+
+    # Current block
+    currentBlock = w3.eth.blockNumber
+
+    # First block to check
+    fromBlock = currentBlock - blocksToCheck
+
+    # fromBlock = 0 # DEBUG - Check all blocks
+    # fromBlock = currentBlock # DEBUG - Check no blocks
+
+    # All AddressBound events since the start of the rate limit period
+    events = list(fetch_events(contract.events.AddressBound, from_block=fromBlock))
+
+    # If any of the events are for this address throw an error
+    for event in events:
+        if (event.args.addr.lower() == addr.lower()):
+            logger.info('{} has reach bind limit'.format(addr))
+            raise Exception('This address has reached the bind rate limit'.format(addr))
 
 def checkMintAllowed(addr, logger):
     # Format address to checksum format
@@ -103,6 +123,7 @@ def bind(addr, uuidHash, nonce, signature, logger):
     logger.info('binding {}'.format(signature))
 
     # Check if calling bind via the relay is allowed.
+    checkMintAllowed(addr, logger)
     checkBindAllowed(addr, logger)
 
     # Format address to checksum format

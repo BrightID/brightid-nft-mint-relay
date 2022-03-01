@@ -53,7 +53,7 @@ def checkBrightIDLink(contextId, logger):
         time.sleep(LINK_CHECK_PERIOD)
     else:
         logger.info('{} monitoring expired'.format(contextId))
-        raise Exception('Could not determine that uuid is linked to BrightID')
+        raise Exception('Could not determine that uuid is linked to BrightID.')
 
 def checkBrightIDSponsorship(contextId, logger):
     # Query BrightID verification data
@@ -100,7 +100,7 @@ def checkBindAllowed(addr, logger):
     for event in events:
         if (event.args.addr.lower() == addr.lower()):
             logger.info('{} has reach bind limit'.format(addr))
-            raise Exception('This address has reached the bind rate limit'.format(addr))
+            raise Exception('This address has reached the bind rate limit.'.format(addr))
 
 def checkMintAllowed(addr, logger):
     # Format address to checksum format
@@ -114,7 +114,7 @@ def checkMintAllowed(addr, logger):
     # Check to see if the user is already verified.
     if balance > 0:
         logger.info('{} has minted'.format(addr))
-        raise Exception('This address has already minted'.format(addr))
+        raise Exception('This address has already minted.'.format(addr))
 
 def bind(addr, uuidHash, nonce, signature, logger):
     logger.info('binding {}'.format(addr))

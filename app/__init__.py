@@ -18,7 +18,7 @@ def format_error(e):
         app.logger.info('code' in errorJson)
         app.logger.info('message' in errorJson)
 
-        if (type(e) is dict) and ('code' in errorJson) and ('message' in errorJson):
+        if (type(errorJson) is dict) and ('code' in errorJson) and ('message' in errorJson):
             return jsonify({'success': False, 'error': {'code': errorJson['code'], 'message': errorJson['message']}})
 
     if (type(e) is dict) and ('code' in e) and ('message' in e):

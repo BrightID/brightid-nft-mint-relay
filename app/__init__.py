@@ -11,6 +11,8 @@ def format_error(e):
     errorCode = 0
     errorMessage = str(e)
 
+    app.logger.info(str(e))
+
     try:
         e = ast.literal_eval(str(e))
     except Exception:

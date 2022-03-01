@@ -153,5 +153,22 @@ def test_mint_endpoint():
 
     return format_success()
 
+# Test Bind Rate Limiting
+@app.route(RELAY_BASE_ROUTE + '/test-bind-limit', methods=['GET'])
+def test_bind_limit_endpoint():
+    app.logger.info('test_bind_limit_endpoint')
+
+    # Check to make sure a wallet address is specified.
+    addr = request.args.get('addr', '')
+    if not addr:
+        return format_error('Missing address'), 400
+
+    try:
+        checkBindAllowed(addr, app.logger)
+    except Exception as e:
+        return format_error(e), 400
+
+    return format_success()
+
 if __name__ == '__main__':
     app.run(host=HOST, port=PORT)

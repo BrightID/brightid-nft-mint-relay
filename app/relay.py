@@ -76,7 +76,7 @@ def checkBindAllowed(addr, logger):
     addr = Web3.toChecksumAddress(addr)
 
     # only allow a bind every n minutes per address
-    rateLimitLengthSeconds = 60 * BIND_RATE_LIMIT_DURATION_MINUTES
+    rateLimitLengthSeconds = 60 * int(BIND_RATE_LIMIT_DURATION_MINUTES)
 
     # each block takes ~5 seconds
     blockLengthSeconds = 5

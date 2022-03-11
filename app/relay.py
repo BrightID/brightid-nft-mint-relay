@@ -151,15 +151,15 @@ def mint(addr, uuid, logger):
     # Get the contract data that will be used as
     # input for the verification transaction.
     data = requests.get(VERIFICATIONS_URL + '/' + CONTEXT + '/' + uuid + '?signed=eth&timestamp=seconds').json()
-    # logger.info('Query verification signing data')
-    # logger.info(data)
+    logger.info('Query verification signing data')
+    logger.info(data)
 
     data = data['data']
 
     # Convert all contextIds to byte32
     # logger.info(data['contextIds'])
     data['contextIds'] = list(map(toBase32, data['contextIds']))
-    # logger.info(data['contextIds'])
+    logger.info(data['contextIds'])
 
     # Run the verification transaction.
     logger.info('minting {}'.format(uuid))

@@ -154,6 +154,10 @@ def mint(addr, uuid, logger):
     logger.info('Query verification signing data')
     logger.info(data)
 
+    if 'errorMessage' in data:
+        logger.info(data['errorMessage'])
+        raise Exception(data['errorMessage'])
+
     data = data['data']
 
     # Convert all contextIds to byte32
